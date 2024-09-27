@@ -66,7 +66,12 @@ class WindowManagerPlugin : public flutter::Plugin {
     LONG l = 8;
     LONG t = 8;
 
-    HMONITOR monitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+    // HMONITOR monitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+    // Don't use `MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST)` above.
+    // Because if the window is restored from minimized state, the window is not in the correct monitor.
+    // The monitor is always the left-most monitor.
+    // https://github.com/leanflutter/window_manager/issues/489
+    HMONITOR monitor = MonitorFromRect(&sz->rgrc[0], MONITOR_DEFAULTTONEAREST);
     if (monitor != NULL) {
       MONITORINFO monitorInfo;
       monitorInfo.cbSize = sizeof(MONITORINFO);
@@ -132,6 +137,7 @@ void WindowManagerPlugin::_EmitEvent(std::string eventName) {
                         std::make_unique<flutter::EncodableValue>(args));
 }
 
+
 std::optional<LRESULT> WindowManagerPlugin::HandleWindowProc(HWND hWnd,
                                                              UINT message,
                                                              WPARAM wParam,
@@ -141,6 +147,7 @@ std::optional<LRESULT> WindowManagerPlugin::HandleWindowProc(HWND hWnd,
   if (message == WM_DPICHANGED) {
     window_manager->pixel_ratio_ =
         (float)LOWORD(wParam) / USER_DEFAULT_SCREEN_DPI;
+    window_manager->ForceChildRefresh();
   }
 
   if (wParam && message == WM_NCCALCSIZE) {
