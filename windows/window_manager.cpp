@@ -89,6 +89,7 @@ class WindowManager {
 
   bool is_resizing_ = false;
   bool is_moving_ = false;
+  bool is_prevent_focus_ = false;
 
   HWND GetMainWindow();
   void WindowManager::ForceRefresh();
@@ -134,6 +135,7 @@ class WindowManager {
   void WindowManager::SetClosable(const flutter::EncodableMap& args);
   bool WindowManager::IsAlwaysOnTop();
   void WindowManager::SetAlwaysOnTop(const flutter::EncodableMap& args);
+  void WindowManager::SetPreventFocus(const flutter::EncodableMap& args);
   bool WindowManager::IsAlwaysOnBottom();
   void WindowManager::SetAlwaysOnBottom(const flutter::EncodableMap& args);
   std::string WindowManager::GetTitle();
@@ -861,6 +863,10 @@ void WindowManager::SetAlwaysOnTop(const flutter::EncodableMap& args) {
       std::get<bool>(args.at(flutter::EncodableValue("isAlwaysOnTop")));
   SetWindowPos(GetMainWindow(), isAlwaysOnTop ? HWND_TOPMOST : HWND_NOTOPMOST,
                0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+}
+
+void WindowManager::SetPreventFocus(const flutter::EncodableMap& args) {
+  is_prevent_focus_ = std::get<bool>(args.at(flutter::EncodableValue("isEnable")));
 }
 
 bool WindowManager::IsAlwaysOnBottom() {

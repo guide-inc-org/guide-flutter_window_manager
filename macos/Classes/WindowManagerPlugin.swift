@@ -201,6 +201,10 @@ public class WindowManagerPlugin: NSObject, FlutterPlugin {
             windowManager.setAlwaysOnTop(args)
             result(true)
             break
+        case "setPreventFocus":
+            windowManager.setPreventFocus(args)
+            result(true)
+            break
         case "getTitle":
             result(windowManager.getTitle())
             break

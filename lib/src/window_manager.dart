@@ -522,6 +522,14 @@ class WindowManager {
     };
     await _channel.invokeMethod('setAlwaysOnTop', arguments);
   }
+  
+  /// Sets prevent close for prevent bring to top on window focus
+  Future<void> setPreventFocus(bool isEnable) async {
+    final Map<String, dynamic> arguments = {
+      'isEnable': isEnable,
+    };
+    await _channel.invokeMethod('setPreventFocus', arguments);
+  }
 
   /// Returns `bool` - Whether the window is always below other windows.
   Future<bool> isAlwaysOnBottom() async {

@@ -340,6 +340,16 @@ std::optional<LRESULT> WindowManagerPlugin::HandleWindowProc(HWND hWnd,
            flutter::EncodableValue(true)}};
       window_manager->SetAlwaysOnBottom(args);
     }
+  } else if (message == WM_WINDOWPOSCHANGING) {
+    if (window_manager->is_prevent_focus_) {
+      WINDOWPOS *pPos = (WINDOWPOS *)lParam;
+      // Check if the window is being brought to the top (SWP_NOZORDER is NOT set)
+      if (!(pPos->flags & SWP_NOZORDER))
+      {
+        // Prevent the window from being brought to the top
+        pPos->flags |= SWP_NOZORDER;
+      }
+    }
   }
 
   return result;
@@ -503,6 +513,11 @@ void WindowManagerPlugin::HandleMethodCall(
     const flutter::EncodableMap& args =
         std::get<flutter::EncodableMap>(*method_call.arguments());
     window_manager->SetAlwaysOnTop(args);
+    result->Success(flutter::EncodableValue(true));
+  } else if (method_name.compare("setPreventFocus") == 0) {
+    const flutter::EncodableMap& args =
+        std::get<flutter::EncodableMap>(*method_call.arguments());
+    window_manager->SetPreventFocus(args);
     result->Success(flutter::EncodableValue(true));
   } else if (method_name.compare("isAlwaysOnBottom") == 0) {
     bool value = window_manager->IsAlwaysOnBottom();

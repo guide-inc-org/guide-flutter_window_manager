@@ -362,6 +362,11 @@ public class WindowManager: NSObject, NSWindowDelegate {
             mainWindow.setStyleMask(isAlwaysOnTop, .nonactivatingPanel)
         }
     }
+
+    public func setPreventFocus(_ args: [String: Any]) {
+        let isEnable: Bool = args["isEnable"] as! Bool
+        mainWindow.ignoresMouseEvents = isEnable
+    }
     
     public func getTitle() -> String {
         return mainWindow.title
