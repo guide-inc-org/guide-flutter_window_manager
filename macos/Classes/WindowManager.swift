@@ -296,9 +296,12 @@ public class WindowManager: NSObject, NSWindowDelegate {
     }
     
     public func setMaximumSize(_ args: [String: Any]) {
+        let width = CGFloat((args["width"] as! NSNumber).floatValue)
+        let height = CGFloat((args["height"] as! NSNumber).floatValue)
+        
         let maxSize: NSSize = NSSize(
-            width: CGFloat((args["width"] as! NSNumber).floatValue),
-            height: CGFloat((args["height"] as! NSNumber).floatValue)
+            width: width == -1 ? CGFloat.greatestFiniteMagnitude : width,
+            height: height == -1 ? CGFloat.greatestFiniteMagnitude : height
         )
         mainWindow.maxSize = maxSize
     }

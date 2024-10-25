@@ -791,13 +791,13 @@ void WindowManager::SetMaximumSize(const flutter::EncodableMap& args) {
   double width = std::get<double>(args.at(flutter::EncodableValue("width")));
   double height = std::get<double>(args.at(flutter::EncodableValue("height")));
 
-  if (width >= 0 && height >= 0) {
+  // if (width >= 0 && height >= 0) {
     pixel_ratio_ = devicePixelRatio;
     POINT point = {};
     point.x = static_cast<LONG>(width);
     point.y = static_cast<LONG>(height);
     maximum_size_ = point;
-  }
+  // }
 }
 
 bool WindowManager::IsResizable() {
