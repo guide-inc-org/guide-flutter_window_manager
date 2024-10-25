@@ -116,6 +116,7 @@ class WindowManager {
   int WindowManager::IsDocked();
   void WindowManager::Dock(const flutter::EncodableMap& args);
   bool WindowManager::Undock();
+  bool WindowManager::UnArrange();
   bool WindowManager::IsFullScreen();
   void WindowManager::SetFullScreen(const flutter::EncodableMap& args);
   void WindowManager::SetAspectRatio(const flutter::EncodableMap& args);
@@ -434,6 +435,16 @@ bool WindowManager::Undock() {
   bool result = RegisterAccessBar(mainWindow, false);
   is_docked_ = 0;
   return result;
+}
+
+bool WindowManager::UnArrange() {
+  HWND mainWindow = GetMainWindow();
+  // if (IsWindowArranged(mainWindow)) {
+      // Restore the window to its normal size and position
+      ShowWindow(mainWindow, SW_RESTORE);
+      return true;
+  // }
+  // return false;
 }
 
 void PASCAL WindowManager::AppBarQuerySetPos(HWND hwnd,

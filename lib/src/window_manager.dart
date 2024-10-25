@@ -307,6 +307,13 @@ class WindowManager {
     return await _channel.invokeMethod('undock');
   }
 
+  /// unArrange the window. only works on Windows
+  ///
+  /// @platforms windows
+  Future<bool> unArrange() async {
+    return await _channel.invokeMethod('unArrange');
+  }
+
   /// This will make a window maintain an aspect ratio.
   Future<void> setAspectRatio(double aspectRatio) async {
     final Map<String, dynamic> arguments = {

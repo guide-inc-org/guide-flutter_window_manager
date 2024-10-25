@@ -436,6 +436,9 @@ void WindowManagerPlugin::HandleMethodCall(
   } else if (method_name.compare("undock") == 0) {
     bool value = window_manager->Undock();
     result->Success(flutter::EncodableValue(value));
+  } else if (method_name.compare("unArrange") == 0) {
+    bool value = window_manager->UnArrange();
+    result->Success(flutter::EncodableValue(value));
   } else if (method_name.compare("isFullScreen") == 0) {
     bool value = window_manager->IsFullScreen();
     result->Success(flutter::EncodableValue(value));
