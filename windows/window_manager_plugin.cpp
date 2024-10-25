@@ -207,7 +207,7 @@ std::optional<LRESULT> WindowManagerPlugin::HandleWindowProc(HWND hWnd,
           window_manager->maximum_size_.x * window_manager->pixel_ratio_);
     if (window_manager->maximum_size_.y != -1)
       info->ptMaxTrackSize.y = static_cast<LONG>(
-          window_manager->maximum_size_.y * window_manager->pixel_ratio_);
+          window_manager->maximum_size_.y * window_manager->pixel_ratio_ + (window_manager->IsMaximized() ? 8 : 0));
     result = 0;
   } else if (message == WM_NCACTIVATE) {
     if (wParam != 0) {
