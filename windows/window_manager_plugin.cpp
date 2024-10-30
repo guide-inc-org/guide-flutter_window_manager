@@ -350,6 +350,12 @@ std::optional<LRESULT> WindowManagerPlugin::HandleWindowProc(HWND hWnd,
         pPos->flags |= SWP_NOZORDER;
       }
     }
+  } else if (message == WM_SYSCOMMAND) {
+    // Check if the command is for minimizing the window
+    if (window_manager->is_prevent_focus_ && (wParam & 0xFFF0) == SC_MINIMIZE) {
+      // Prevent the window from minimizing
+      return 0;
+    }
   }
 
   return result;
