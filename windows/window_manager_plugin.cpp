@@ -341,15 +341,15 @@ std::optional<LRESULT> WindowManagerPlugin::HandleWindowProc(HWND hWnd,
       window_manager->SetAlwaysOnBottom(args);
     }
   } else if (message == WM_WINDOWPOSCHANGING) {
-    if (window_manager->is_prevent_focus_) {
-      WINDOWPOS *pPos = (WINDOWPOS *)lParam;
-      // Check if the window is being brought to the top (SWP_NOZORDER is NOT set)
-      if (!(pPos->flags & SWP_NOZORDER))
-      {
-        // Prevent the window from being brought to the top
-        pPos->flags |= SWP_NOZORDER;
-      }
-    }
+    // if (window_manager->is_prevent_focus_) {
+    //   WINDOWPOS *pPos = (WINDOWPOS *)lParam;
+    //   // Check if the window is being brought to the top (SWP_NOZORDER is NOT set)
+    //   if (!(pPos->flags & SWP_NOZORDER))
+    //   {
+    //     // Prevent the window from being brought to the top
+    //     pPos->flags |= SWP_NOZORDER;
+    //   }
+    // }
   } else if (message == WM_SYSCOMMAND) {
     // Check if the command is for minimizing the window
     if (window_manager->is_prevent_focus_ && (wParam & 0xFFF0) == SC_MINIMIZE) {
