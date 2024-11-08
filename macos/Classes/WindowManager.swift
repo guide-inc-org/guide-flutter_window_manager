@@ -251,15 +251,11 @@ public class WindowManager: NSObject, NSWindowDelegate {
     }
     
     public func getBounds() -> NSDictionary? {
-        guard let screen = mainWindow.screen else { return nil }
         let frameRect: NSRect = mainWindow.frame;
-        // Get the screen's frame in global display coordinates
-        let screenFrame = screen.frame
         
         let data: NSDictionary = [
             "x": frameRect.topLeft.x,
-            // Convert y position to the global display coordinates
-            "y": screenFrame.height - (frameRect.origin.y + frameRect.height - screenFrame.origin.y),
+            "y": frameRect.topLeft.y,
             "width": frameRect.size.width,
             "height": frameRect.size.height,
         ]
