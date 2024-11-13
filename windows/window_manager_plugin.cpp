@@ -149,6 +149,9 @@ std::optional<LRESULT> WindowManagerPlugin::HandleWindowProc(HWND hWnd,
         (float)LOWORD(wParam) / USER_DEFAULT_SCREEN_DPI;
     window_manager->ForceChildRefresh();
   }
+  if (message == WM_DISPLAYCHANGE) {
+    _EmitEvent("moved");
+  }
 
   if (wParam && message == WM_NCCALCSIZE) {
     if (window_manager->IsFullScreen() &&
