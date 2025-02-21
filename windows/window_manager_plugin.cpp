@@ -50,6 +50,8 @@ class WindowManagerPlugin : public flutter::Plugin {
 
   // The ID of the WindowProc delegate registration.
   int window_proc_id = -1;
+  LONG margin_top_ = 8;
+  LONG margin_left_ = 8;
 
   void WindowManagerPlugin::_EmitEvent(std::string eventName);
   // Called for top-level WindowProc delegation.
@@ -63,9 +65,6 @@ class WindowManagerPlugin : public flutter::Plugin {
       std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result);
 
   void adjustNCCALCSIZE(HWND hwnd, NCCALCSIZE_PARAMS* sz) {
-    LONG l = 8;
-    LONG t = 8;
-
     // HMONITOR monitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
     // Don't use `MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST)` above.
     // Because if the window is restored from minimized state, the window is not in the correct monitor.
@@ -76,8 +75,8 @@ class WindowManagerPlugin : public flutter::Plugin {
       MONITORINFO monitorInfo;
       monitorInfo.cbSize = sizeof(MONITORINFO);
       if (TRUE == GetMonitorInfo(monitor, &monitorInfo)) {
-        l = sz->rgrc[0].left - monitorInfo.rcWork.left;
-        t = sz->rgrc[0].top - monitorInfo.rcWork.top;
+        margin_left_ = sz->rgrc[0].left - monitorInfo.rcWork.left;
+        margin_top_ = sz->rgrc[0].top - monitorInfo.rcWork.top;
       } else {
         // GetMonitorInfo failed, use (8, 8) as default value
       }
@@ -85,10 +84,10 @@ class WindowManagerPlugin : public flutter::Plugin {
       // unreachable code
     }
 
-    sz->rgrc[0].left -= l;
-    sz->rgrc[0].top -= t;
-    sz->rgrc[0].right += l;
-    sz->rgrc[0].bottom += t;
+    sz->rgrc[0].left -= margin_left_;
+    sz->rgrc[0].top -= margin_top_;
+    sz->rgrc[0].right += margin_left_;
+    sz->rgrc[0].bottom += margin_top_;
   }
 };
 
@@ -198,19 +197,23 @@ std::optional<LRESULT> WindowManagerPlugin::HandleWindowProc(HWND hWnd,
     }
   } else if (message == WM_GETMINMAXINFO) {
     MINMAXINFO* info = reinterpret_cast<MINMAXINFO*>(lParam);
+    int base_margin = 10;
+    LONG buffHeight = window_manager->IsMaximized() ? std::abs(margin_top_) + base_margin : base_margin;
+    LONG buffWidth = std::abs(margin_left_ * 2);
+
     // For the special "unconstrained" values, leave the defaults.
     if (window_manager->minimum_size_.x != 0)
       info->ptMinTrackSize.x = static_cast<LONG>(
-          window_manager->minimum_size_.x * window_manager->pixel_ratio_);
+          window_manager->minimum_size_.x * window_manager->pixel_ratio_ + buffWidth);
     if (window_manager->minimum_size_.y != 0)
       info->ptMinTrackSize.y = static_cast<LONG>(
-          window_manager->minimum_size_.y * window_manager->pixel_ratio_);
+          window_manager->minimum_size_.y * window_manager->pixel_ratio_ + buffHeight);
     if (window_manager->maximum_size_.x != -1)
       info->ptMaxTrackSize.x = static_cast<LONG>(
-          window_manager->maximum_size_.x * window_manager->pixel_ratio_);
+          window_manager->maximum_size_.x * window_manager->pixel_ratio_ + buffWidth);
     if (window_manager->maximum_size_.y != -1)
       info->ptMaxTrackSize.y = static_cast<LONG>(
-          window_manager->maximum_size_.y * window_manager->pixel_ratio_ + (window_manager->IsMaximized() ? 8 : 0));
+          window_manager->maximum_size_.y * window_manager->pixel_ratio_ + buffHeight);
     result = 0;
   } else if (message == WM_NCACTIVATE) {
     if (wParam != 0) {
@@ -235,11 +238,11 @@ std::optional<LRESULT> WindowManagerPlugin::HandleWindowProc(HWND hWnd,
   } else if (message == WM_MOVING) {
     window_manager->is_moving_ = true;
     _EmitEvent("move");
+
     return false;
   } else if (message == WM_SIZING) {
     window_manager->is_resizing_ = true;
     _EmitEvent("resize");
-
     if (window_manager->aspect_ratio_ > 0) {
       RECT* rect = (LPRECT)lParam;
 

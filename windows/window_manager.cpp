@@ -440,9 +440,9 @@ bool WindowManager::Undock() {
 bool WindowManager::UnArrange() {
   HWND mainWindow = GetMainWindow();
   // if (IsWindowArranged(mainWindow)) {
-      // Restore the window to its normal size and position
-      ShowWindow(mainWindow, SW_RESTORE);
-      return true;
+  // Restore the window to its normal size and position
+  ShowWindow(mainWindow, SW_RESTORE);
+  return true;
   // }
   // return false;
 }
@@ -766,8 +766,16 @@ void WindowManager::SetBounds(const flutter::EncodableMap& args) {
   if (null_or_width == nullptr || null_or_height == nullptr) {
     uFlags = SWP_NOSIZE;
   }
+  if (null_or_width != nullptr && *null_or_width < 0) {
+    // Keep screen width
+    RECT rect;
+    GetWindowRect(hwnd, &rect);
+    int currentWidth = rect.right - rect.left;
 
-  SetWindowPos(hwnd, HWND_TOP, x, y, width, height, uFlags);
+    SetWindowPos(hwnd, HWND_TOP, x, y, currentWidth, height, uFlags);
+  } else {
+    SetWindowPos(hwnd, HWND_TOP, x, y, width, height, uFlags);
+  }
 }
 
 void WindowManager::SetMinimumSize(const flutter::EncodableMap& args) {
@@ -792,11 +800,11 @@ void WindowManager::SetMaximumSize(const flutter::EncodableMap& args) {
   double height = std::get<double>(args.at(flutter::EncodableValue("height")));
 
   // if (width >= 0 && height >= 0) {
-    pixel_ratio_ = devicePixelRatio;
-    POINT point = {};
-    point.x = static_cast<LONG>(width);
-    point.y = static_cast<LONG>(height);
-    maximum_size_ = point;
+  pixel_ratio_ = devicePixelRatio;
+  POINT point = {};
+  point.x = static_cast<LONG>(width);
+  point.y = static_cast<LONG>(height);
+  maximum_size_ = point;
   // }
 }
 
@@ -877,7 +885,8 @@ void WindowManager::SetAlwaysOnTop(const flutter::EncodableMap& args) {
 }
 
 void WindowManager::SetPreventFocus(const flutter::EncodableMap& args) {
-  is_prevent_focus_ = std::get<bool>(args.at(flutter::EncodableValue("isEnable")));
+  is_prevent_focus_ =
+      std::get<bool>(args.at(flutter::EncodableValue("isEnable")));
 }
 
 bool WindowManager::IsAlwaysOnBottom() {
