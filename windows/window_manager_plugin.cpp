@@ -362,6 +362,16 @@ std::optional<LRESULT> WindowManagerPlugin::HandleWindowProc(HWND hWnd,
       // Prevent the window from minimizing
       return 0;
     }
+  } else if (message == WM_SETCURSOR) {
+    // Prevent the cursor from changing at the top and bottom edges
+    WORD hitTest = LOWORD(lParam);
+    if (window_manager->maximum_size_.y != -1 &&
+        (hitTest == HTTOP || hitTest == HTBOTTOM || hitTest == HTTOPLEFT ||
+         hitTest == HTTOPRIGHT || hitTest == HTBOTTOMLEFT ||
+         hitTest == HTBOTTOMRIGHT)) {
+      SetCursor(LoadCursor(NULL, IDC_ARROW));  // Force normal arrow cursor
+      return TRUE;
+    }
   }
 
   return result;
