@@ -198,7 +198,7 @@ std::optional<LRESULT> WindowManagerPlugin::HandleWindowProc(HWND hWnd,
   } else if (message == WM_GETMINMAXINFO) {
     MINMAXINFO* info = reinterpret_cast<MINMAXINFO*>(lParam);
     int base_margin = 10;
-    LONG buffHeight = window_manager->IsMaximized() ? std::abs(margin_top_) + base_margin : base_margin;
+    LONG buffHeight = IsZoomed(hWnd) ? std::abs(margin_top_) + base_margin : base_margin;
     LONG buffWidth = std::abs(margin_left_ * 2);
 
     // For the special "unconstrained" values, leave the defaults.
