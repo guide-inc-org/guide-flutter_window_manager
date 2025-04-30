@@ -7,3 +7,6 @@
 build/
 Generated*
 generated*
+
+# FVM Version Cache
+.fvm/
