@@ -50,8 +50,6 @@ class WindowManagerPlugin : public flutter::Plugin {
 
   // The ID of the WindowProc delegate registration.
   int window_proc_id = -1;
-  LONG margin_top_ = 8;
-  LONG margin_left_ = 8;
 
   void WindowManagerPlugin::_EmitEvent(std::string eventName);
   // Called for top-level WindowProc delegation.
@@ -64,7 +62,9 @@ class WindowManagerPlugin : public flutter::Plugin {
       const flutter::MethodCall<flutter::EncodableValue>& method_call,
       std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result);
 
-  void adjustNCCALCSIZE(HWND hwnd, NCCALCSIZE_PARAMS* sz) {
+  void adjustNCCALCSIZE(HWND hwnd, NCCALCSIZE_PARAMS* sz,  bool needAdjustHeight) {
+    LONG l = 0;
+    LONG t = 0;
     // HMONITOR monitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
     // Don't use `MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST)` above.
     // Because if the window is restored from minimized state, the window is not in the correct monitor.
@@ -75,19 +75,22 @@ class WindowManagerPlugin : public flutter::Plugin {
       MONITORINFO monitorInfo;
       monitorInfo.cbSize = sizeof(MONITORINFO);
       if (TRUE == GetMonitorInfo(monitor, &monitorInfo)) {
-        margin_left_ = sz->rgrc[0].left - monitorInfo.rcWork.left;
-        margin_top_ = sz->rgrc[0].top - monitorInfo.rcWork.top;
+        l = sz->rgrc[0].left - monitorInfo.rcWork.left;
+        t = sz->rgrc[0].top - monitorInfo.rcWork.top;
       } else {
-        // GetMonitorInfo failed, use (8, 8) as default value
+        // GetMonitorInfo failed, use (0, 0) as default value
       }
     } else {
       // unreachable code
     }
-
-    sz->rgrc[0].left -= margin_left_;
-    sz->rgrc[0].top -= margin_top_;
-    sz->rgrc[0].right += margin_left_;
-    sz->rgrc[0].bottom += margin_top_;
+    sz->rgrc[0].top -= t;
+    if (needAdjustHeight) {
+      sz->rgrc[0].bottom += t;
+    } else {
+      sz->rgrc[0].bottom -= t;
+    }
+    sz->rgrc[0].left -= l;
+    sz->rgrc[0].right += l;
   }
 };
 
@@ -153,10 +156,12 @@ std::optional<LRESULT> WindowManagerPlugin::HandleWindowProc(HWND hWnd,
   }
 
   if (wParam && message == WM_NCCALCSIZE) {
+    bool needAdjustHeight = window_manager->maximum_size_.y == -1;
+
     if (window_manager->IsFullScreen() &&
         window_manager->title_bar_style_ != "normal") {
       if (window_manager->is_frameless_) {
-        adjustNCCALCSIZE(hWnd, reinterpret_cast<NCCALCSIZE_PARAMS*>(lParam));
+        adjustNCCALCSIZE(hWnd, reinterpret_cast<NCCALCSIZE_PARAMS*>(lParam), needAdjustHeight);
       }
       return 0;
     }
@@ -164,7 +169,7 @@ std::optional<LRESULT> WindowManagerPlugin::HandleWindowProc(HWND hWnd,
     // the `if TitleBarStyle.hidden` doesn't get executed.
     if (window_manager->is_frameless_) {
       if (window_manager->IsMaximized()) {
-        adjustNCCALCSIZE(hWnd, reinterpret_cast<NCCALCSIZE_PARAMS*>(lParam));
+        adjustNCCALCSIZE(hWnd, reinterpret_cast<NCCALCSIZE_PARAMS*>(lParam), needAdjustHeight);
       }
       return 0;
     }
@@ -173,17 +178,12 @@ std::optional<LRESULT> WindowManagerPlugin::HandleWindowProc(HWND hWnd,
     if (wParam && window_manager->title_bar_style_ == "hidden") {
       if (window_manager->IsMaximized()) {
         // Adjust the borders when maximized so the app isn't cut off
-        adjustNCCALCSIZE(hWnd, reinterpret_cast<NCCALCSIZE_PARAMS*>(lParam));
+        adjustNCCALCSIZE(hWnd, reinterpret_cast<NCCALCSIZE_PARAMS*>(lParam), needAdjustHeight);
       } else {
         NCCALCSIZE_PARAMS* sz = reinterpret_cast<NCCALCSIZE_PARAMS*>(lParam);
         // on windows 10, if set to 0, there's a white line at the top
         // of the app and I've yet to find a way to remove that.
         sz->rgrc[0].top += IsWindows11OrGreater() ? 0 : 1;
-        // The following lines are required for resizing the window.
-        // https://github.com/leanflutter/window_manager/issues/483
-        sz->rgrc[0].right -= 8;
-        sz->rgrc[0].bottom -= 8;
-        sz->rgrc[0].left -= -8;
       }
 
       // Previously (WVR_HREDRAW | WVR_VREDRAW), but returning 0 or 1 doesn't
@@ -197,23 +197,19 @@ std::optional<LRESULT> WindowManagerPlugin::HandleWindowProc(HWND hWnd,
     }
   } else if (message == WM_GETMINMAXINFO) {
     MINMAXINFO* info = reinterpret_cast<MINMAXINFO*>(lParam);
-    int base_margin = 10;
-    LONG buffHeight = IsZoomed(hWnd) ? std::abs(margin_top_) + base_margin : base_margin;
-    LONG buffWidth = std::abs(margin_left_ * 2);
-
     // For the special "unconstrained" values, leave the defaults.
     if (window_manager->minimum_size_.x != 0)
       info->ptMinTrackSize.x = static_cast<LONG>(
-          window_manager->minimum_size_.x * window_manager->pixel_ratio_ + buffWidth);
+          window_manager->minimum_size_.x * window_manager->pixel_ratio_);
     if (window_manager->minimum_size_.y != 0)
       info->ptMinTrackSize.y = static_cast<LONG>(
-          window_manager->minimum_size_.y * window_manager->pixel_ratio_ + buffHeight);
+          window_manager->minimum_size_.y * window_manager->pixel_ratio_);
     if (window_manager->maximum_size_.x != -1)
       info->ptMaxTrackSize.x = static_cast<LONG>(
-          window_manager->maximum_size_.x * window_manager->pixel_ratio_ + buffWidth);
+          window_manager->maximum_size_.x * window_manager->pixel_ratio_);
     if (window_manager->maximum_size_.y != -1)
       info->ptMaxTrackSize.y = static_cast<LONG>(
-          window_manager->maximum_size_.y * window_manager->pixel_ratio_ + buffHeight);
+          window_manager->maximum_size_.y * window_manager->pixel_ratio_);
     result = 0;
   } else if (message == WM_NCACTIVATE) {
     if (wParam != 0) {
