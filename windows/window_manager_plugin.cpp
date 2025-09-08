@@ -329,9 +329,23 @@ std::optional<LRESULT> WindowManagerPlugin::HandleWindowProc(HWND hWnd,
       }
     }
   } else if (message == WM_CLOSE) {
+    std::cout << "WM_CLOSE: " << wParam << std::endl;
     _EmitEvent("close");
     if (window_manager->IsPreventClose()) {
+      std::cout << "WM_CLOSE: Preventing close" << std::endl;
       return -1;
+    } 
+  } else if (message == WM_SYSCOMMAND) {
+    // Handle close from taskbar preview, Alt+F4, system menu, etc.
+    std::cout << "WM_SYSCOMMAND: " << wParam << std::endl;
+    if ((wParam & 0xFFF0) == SC_CLOSE) {
+      std::cout << "WM_SYSCOMMAND: SC_CLOSE" << std::endl;
+      _EmitEvent("close");
+      if (window_manager->IsPreventClose()) {
+        std::cout << "WM_SYSCOMMAND: Preventing close" << std::endl;
+        return 0; // Prevent the close operation
+      }
+      // Let the default handler process the close
     }
   } else if (message == WM_SHOWWINDOW) {
     if (wParam == TRUE) {
