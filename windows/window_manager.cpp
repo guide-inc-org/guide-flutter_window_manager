@@ -76,6 +76,7 @@ class WindowManager {
   bool is_always_on_bottom_ = false;
   bool is_frameless_ = false;
   bool is_prevent_close_ = false;
+  bool close_event_from_system_command_ = false;
   double aspect_ratio_ = 0;
   POINT minimum_size_ = {0, 0};
   POINT maximum_size_ = {-1, -1};

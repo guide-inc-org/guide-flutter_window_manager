@@ -329,10 +329,10 @@ std::optional<LRESULT> WindowManagerPlugin::HandleWindowProc(HWND hWnd,
       }
     }
   } else if (message == WM_CLOSE) {
-    _EmitEvent("close");
-    if (window_manager->IsPreventClose()) {
-      return -1;
+    if (!window_manager->close_event_from_system_command_) {
+      _EmitEvent("close");
     }
+    window_manager->close_event_from_system_command_ = false;
   } else if (message == WM_SHOWWINDOW) {
     if (wParam == TRUE) {
       _EmitEvent("show");
@@ -357,8 +357,16 @@ std::optional<LRESULT> WindowManagerPlugin::HandleWindowProc(HWND hWnd,
     //   }
     // }
   } else if (message == WM_SYSCOMMAND) {
-    // Check if the command is for minimizing the window
-    if (window_manager->is_prevent_focus_ && (wParam & 0xFFF0) == SC_MINIMIZE) {
+    UINT command = wParam & 0xFFF0;
+    if (command == SC_CLOSE) {
+      window_manager->close_event_from_system_command_ = true;
+      _EmitEvent("close");
+      if (window_manager->IsPreventClose()) {
+        window_manager->close_event_from_system_command_ = false;
+        return 0;
+      }
+    }
+    if (window_manager->is_prevent_focus_ && command == SC_MINIMIZE) {
       // Prevent the window from minimizing
       return 0;
     }
